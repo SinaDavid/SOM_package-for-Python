@@ -27,51 +27,7 @@ def som_make(D, *args, **kwargs):
 
     dlen, dim = D.shape
     
-    # Process additional keyword arguments
-    # init = kwargs.get('init', 'lininit')
-    # algorithm = kwargs.get('algorithm', 'batch')
-    # munits = kwargs.get('munits', None)
-    # msize = kwargs.get('msize', None)
-    # mapsize = kwargs.get('mapsize', 'normal')
-    # lattice = kwargs.get('lattice', 'hexa')
-    # shape = kwargs.get('shape', 'sheet')
-    # neigh = kwargs.get('neigh', 'gaussian')
-    # topol = kwargs.get('topol', None)
-    # mask = kwargs.get('mask', None)
-    # name = kwargs.get('name', None)
-    # tracking = kwargs.get('tracking', 1)
-    # training = kwargs.get('training', 'default')
-    
-    # defaults
-    mapsize= ''
-    sM = som_map_struct(dim)
-    # Determine number of map units if not specified
-    if munits is None:
-        munits = int(5 * dlen ** 0.54321)
-
-    # Determine map grid size if not specified
-    if msize is None:
-        # Use PCA to calculate the two biggest eigenvalues
-        pca = PCA(n_components=2)
-        pca.fit(D)
-        eigenvalues = pca.explained_variance_
-        ratio = eigenvalues[1] / eigenvalues[0]  # ratio between sidelengths
-        # Determine the sidelengths
-        msize_x = int(np.sqrt(munits / ratio))
-        msize_y = int(np.sqrt(munits * ratio))
-        msize = [msize_x, msize_y]
-    print("Value of dlen:", dlen)
-    # Initialize SOM
-    if init == 'lininit':
-        # Implement linear initialization
-        pass  # Placeholder for linear initialization
-    elif init == 'randinit':
-        # Implement random initialization
-        pass  # Placeholder for random initialization
-    else:
-        raise ValueError("Invalid value for 'init'. Must be 'lininit' or 'randinit'.")
-    
-    
+           
     # defaults
     mapsize = ''
     sM = som_map_struct(dim)
@@ -86,55 +42,70 @@ def som_make(D, *args, **kwargs):
     initalg = 'lininit'
     training = 'default'
     
+    
     # args
     i = 0
     while i < len(args):
-        arg = args[i]
+        
         argok = 1
-        if isinstance(arg, str):
-            if arg == 'mask':
-                i += 1
+        if isinstance(args[i], str):
+            if args[i] == 'mask':
                 mask = args[i]
-            elif arg == 'munits':
-                i += 1
+                i=i+1
+            elif args[i] == 'munits':
                 munits = args[i]
-            elif arg == 'msize':
-                i += 1
+                i=i+1
+            elif args[i] == 'msize':
                 sTopol['msize'] = args[i]
                 munits = np.prod(sTopol['msize'])
-            elif arg == 'mapsize':
-                i += 1
+                i=i+1
+            elif args[i] == 'mapsize':
                 mapsize = args[i]
-            elif arg == 'name':
-                i += 1
+                i=i+1
+            elif args[i] == 'name':
                 name = args[i]
-            elif arg == 'comp_names':
-                i += 1
+                i=i+1
+            elif args[i] == 'comp_names':
                 comp_names = args[i]
-            elif arg == 'lattice':
-                i += 1
+                i=i+1
+            elif args[i] == 'lattice':
                 sTopol['lattice'] = args[i]
-            elif arg == 'shape':
-                i += 1
+                i=i+1
+            elif args[i] == 'shape':
                 sTopol['shape'] = args[i]
-            elif arg in ['topol', 'som_topol', 'sTopol']:
-                i += 1
+                i=i+1
+            elif args[i] in ['topol', 'som_topol', 'sTopol']:
                 sTopol = args[i]
                 munits = np.prod(sTopol['msize'])
-            elif arg == 'neigh':
-                i += 1
+                i=i+1
+            elif args[i] == 'neigh':
                 neigh = args[i]
-            elif arg == 'tracking':
-                i += 1
+                i=i+1
+            elif args[i] == 'tracking':
                 tracking = args[i]
-            elif arg == 'algorithm':
-                i += 1
+                i=i+1
+            elif args[i] == 'algorithm':
                 algorithm = args[i]
-            elif arg == 'init':
-                i += 1
+                i=i+1
+            elif args[i] == 'init':
                 initalg = args[i]
-            elif arg == 'training':
-                i += 1
+                i=i+1
+            elif args[i] == 'training':
+                training = args[i]
+                i=i+1
+            elif args[i] in ['hexa', 'rect']:
+                sTopol['lattice']= args[i]
+            elif args[i] in ['sheet', 'cyl', 'toroid']:
+                sTopol['shape'] = args[i]
+            elif args[i] in ['gaussian','cutgauss','ep','bubble']:
+                neigh = args[i]
+            elif args[i] in ['seq','batch','sompak']:
+                algorithm= args[i]
+            elif args[i] in ['small','normal','big']:
+                mapsize = args[i]
+            elif args[i] in ['randinit','lininit']:
+                initalg = args[i]
+            elif args[i] in ['short','default','long']:
                 training = args[i]
             else:
                 argok = 0
@@ -152,24 +123,25 @@ def som_make(D, *args, **kwargs):
     
     # Map size determination
     
+    
     if bool(sTopol['msize']) or np.prod(sTopol['msize']) == 0:
         if tracking > 0:
             print('Determining map size...')
         if munits==0:
-            sTemp = som_topol_struct('dlen', dlen)
-            # breakpoint()
+            sTemp = som_topol_struct(*['dlen'], **{'dlen': dlen})
             munits = np.prod(sTemp['msize'])
             if mapsize == 'small':
                 munits = max(9, np.ceil(munits / 4))
             elif mapsize == 'big':
                 munits *= 4
-        sTemp= som_topol_struct('data',D, 'munits', munits)    
+        sTemp= som_topol_struct(*['data', 'munits'],**{'data':D, 'munits': munits})    
         sTopol['msize'] = sTemp['msize']
         if tracking > 0:
             print(f"Map size [{sTopol['msize'][0]}, {sTopol['msize'][1]}]")
     
     # breakpoint()
-    sMap = som_map_struct(dim, **{'sTopol': sTopol, 'neigh': neigh, 'mask': mask, 'name': name, 'comp_names': comp_names, 'comp_norm': comp_norm})
+    sMap = som_map_struct(dim, *['sTopol','neigh','mask', 'name', 'comp_names', 'comp_norm'],
+                                 **{'sTopol': sTopol, 'neigh': neigh, 'mask': mask, 'name': name, 'comp_names': comp_names, 'comp_norm': comp_norm})
     
     
     # function

@@ -212,11 +212,11 @@ def som_set(sS, *args, **kwargs):
             
         elif sS['type']== 'som_map':
             codebook = sS['codebook']
-            # if not bool(codebook):
-            #     munits = 0
-            #     dim = 0
-            # else:
-            munits, dim = codebook.shape
+            if codebook.ndim==1:
+                munits = 0
+                dim = 0
+            else:
+                munits, dim = codebook.shape
                 
             if field== 'codebook':
                 if not isinstance(content, np.ndarray):
@@ -316,11 +316,11 @@ def som_set(sS, *args, **kwargs):
                     print("Length of ''comp_norm'' should be equal to dim.")
                 else:
                     isok=1
-                for item in content:
-                    if item and (('type' not in item or item['type'] != 'som_norm')):
-                        msg = "Each element in 'comp_norm' should be either empty or type 'som_norm'."
+                for j, inner_list in enumerate(content):
+                    if inner_list and (not isinstance(inner_list[0], dict) or 'type' not in inner_list[0] or inner_list[0]['type'] != 'som_norm'):
+                        msg = "Each element in 'content' should be either empty or contain a dictionary of type 'som_norm'."
                         isok = False
-                        break    
+                        break
                 if isok==1:
                     sS['comp_norm']=content
                     isok=1

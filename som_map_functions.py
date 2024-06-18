@@ -9,7 +9,7 @@ import numpy as np
 from som_side_functions import *
 from datetime import datetime
 
-def som_map_struct(dim, **kwargs):
+def som_map_struct(dim,*args, **kwargs):
     # default values
     
     
@@ -25,64 +25,60 @@ def som_map_struct(dim, **kwargs):
 
     # args
     # if args:
-    i = 1
-    if 'kwargs' in locals() and bool(kwargs):
-        items = list(kwargs.keys())
+    i = 0 
     
-        
-    
-        while i <= len(kwargs):
-            argok = 1
-            if isinstance(items[i-1], str) and not isinstance(kwargs[items[i-1]],dict):
-                if items[i-1] == 'mask':
-                    mask = kwargs[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] == 'msize':
-                    sTopol['msize'] = kwargs[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] == 'labels':
-                    labels = kwargs[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] == 'name':
-                    name = kwargs[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] == 'comp_names':
-                    comp_names = kwargs[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] == 'comp_norm':
-                    comp_norm = kwargs[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] == 'lattice':
-                    sTopol['lattice'] = args[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] == 'shape':
-                    sTopol['shape'] = kwargs[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] in ['topol', 'som_topol', 'sTopol']:
-                    sTopol = kwargs[items[i-1]]
-                    i =i+ 1
-                elif items[i-1] == 'neigh':
-                    neigh = kwargs[items[i-1]]
-                    i =i+ 1
-                elif 'hexa' in kwargs[items[i-1]] or 'rect'in kwargs[items[i-1]]:
-                    sTopol['lattice'] = kwargs[items[i-1]]
-                elif 'sheet' in kwargs[items[i-1]] or 'cyl' in kwargs[items[i-1]] or 'teroid' in kwargs[items[i-1]]:
-                    sTopol['shape'] = kwargs[items[i-1]]
-                elif 'gaussian' in kwargs[items[i-1]] or 'cutgauss' in kwargs[items[i-1]] or 'ep' in kwargs[items[i-1]] or 'bubble' in kwargs[items[i-1]]:
-                    neigh = kwargs[items[i-1]]
-                else:
-                    argok = 0
-            elif isinstance(kwargs[items[i-1]], dict) and 'type' in kwargs[items[i-1]]:
-                if kwargs[items[i-1]]['type'] == 'som_topol':
-                    sTopol = kwargs[items[i-1]]
-                else:
-                    argok = 0
+    while i <= len(args)-1:
+        argok = 1
+        if isinstance(args[i], str):
+            if args[i] == 'mask':
+                mask = kwargs[args[i]]
+                
+            elif args[i] == 'msize':
+                sTopol['msize'] = kwargs[args[i]]
+                
+            elif args[i] == 'labels':
+                labels = kwargs[args[i]]
+                
+            elif args[i] == 'name':
+                name = kwargs[args[i]]
+                
+            elif args[i] == 'comp_names':
+                comp_names = kwargs[args[i]]
+                
+            elif args[i] == 'comp_norm':
+                comp_norm = kwargs[args[i]]
+                
+            elif args[i] == 'lattice':
+                sTopol['lattice'] = kwargs[args[i]]
+                
+            elif args[i] == 'shape':
+                sTopol['shape'] = kwargs[args[i]]
+                
+            elif args[i] in ['topol', 'som_topol', 'sTopol']:
+                sTopol = kwargs[args[i]]
+                
+            elif args[i] == 'neigh':
+                neigh = kwargs[args[i]]
+                
+            elif args[i] in ['hexa','rect']:
+                sTopol['lattice'] = kwargs[args[i]]
+            elif args[i] in ['sheet','cyl','teroid']:
+                sTopol['shape'] = kwargs[args[i]]
+            elif args[i] in ['gaussian', 'cutgauss', 'ep', 'bubble']:
+                neigh = kwargs[args[i]]
             else:
                 argok = 0
-    
-            if not argok:
-                print(f'(som_map_struct) Ignoring invalid argument #{i + 1}')
-            i =i+ 1
+        elif isinstance(args[i], dict) and 'type' in args[i]:
+            if kwargs[args[i]]['type'] == 'som_topol':
+                sTopol = kwargs[args[i]]
+            else:
+                argok = 0
+        else:
+            argok = 0
+
+        if not argok:
+            print(f'(som_map_struct) Ignoring invalid argument #{i + 1}')
+        i =i+ 1
 
     # create the SOM
     # if sTopol['msize'] == 0:
@@ -93,7 +89,7 @@ def som_map_struct(dim, **kwargs):
     codebook = np.random.rand(np.prod(sTopol['msize']), dim)
     
     sTrain = som_set('som_train', *['time','mask'], **{'time':datetime.now().strftime('%Y-%m-%d %H:%M:%S'),'mask':mask})  # Update time formatting
-    
+    # breakpoint()
     sMap = som_set('som_map', *['codebook', 'topol', 'neigh', 'labels', 'mask', 'comp_names', 'name', 'comp_norm', 'train_hist'], 
         **{'codebook': codebook,'topol': sTopol, 'neigh': neigh, 'labels': labels, 'mask': mask, 
             'comp_names': comp_names, 'name': name, 'comp_norm': comp_norm,'train_hist': sTrain})
@@ -101,7 +97,7 @@ def som_map_struct(dim, **kwargs):
     return sMap
 
 # som_topol_struct
-def som_topol_struct(*args):
+def som_topol_struct(*args, **kwargs):
     """
     SOM_TOPOL_STRUCT Default values for SOM topology.
 
@@ -132,38 +128,39 @@ def som_topol_struct(*args):
     
     # args
     i = 0
-    while i < len(args):
+    while i <= len(args)-1:
         argok = 1
         if isinstance(args[i], str):
             if args[i] == 'dlen':
-                i += 1
-                dlen = args[i]
+                dlen = kwargs[args[i]]
+                # i=i+1
             elif args[i] == 'munits':
-                i += 1
-                munits = args[i]
+                munits = kwargs[args[i]]
                 sTopol['msize'] = 0
+                # i=i+1
             elif args[i] == 'msize':
-                i += 1
-                sTopol['msize'] = args[i]
+                sTopol['msize'] = kwargs[args[i]]
+                # i=i+1
             elif args[i] == 'lattice':
-                i += 1
-                sTopol['lattice'] = args[i]
+                sTopol['lattice'] = kwargs[args[i]]
+                # i=i+1
             elif args[i] == 'shape':
-                i += 1
-                sTopol['shape'] = args[i]
+                sTopol['shape'] = kwargs[args[i]]
+                # i=i+1
             elif args[i] == 'data':
-                i += 1
+                
                 if isinstance(args[i], dict):
                     D = args[i]['data']  
                 else:
-                    D= args[i]
+                    D= kwargs[args[i]]
+                # i =i+1
                 dlen, dim = D.shape
             elif args[i] in ['hexa', 'rect']:
-                sTopol['lattice'] = args[i]
+                sTopol['lattice'] = kwargs[args[i]]
             elif args[i] in ['sheet', 'cyl', 'toroid']:
-                sTopol['shape'] = args[i]
+                sTopol['shape'] = kwargs[args[i]]
             elif args[i] in ['som_topol', 'sTopol', 'topol']:
-                i += 1
+                # i =i+1
                 if 'msize' in args[i] and np.prod(args[i]['msize']):
                     sTopol['msize'] = args[i]['msize']
                 if 'lattice' in args[i]:

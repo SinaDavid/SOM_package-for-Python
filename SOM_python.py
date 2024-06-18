@@ -6,7 +6,7 @@ Created on Wed May  8 16:36:32 2024
 """
 
 import os
-os.chdir('C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Workshop/')
+os.chdir('C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Workshop/SOM-Workshop/')
 import numpy as np
 #from matplotlib import pyplot as plt
 from sklearn.datasets import load_iris
