@@ -1,7 +1,14 @@
-import numpy as np
-from som_side_functions import *
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jun 19 11:51:09 2024
 
-def som_data_struct(D, name=None, *varargin):
+@author: sdd380
+"""
+
+import numpy as np
+from som_set import som_set
+
+def som_data_struct(D, name=None, *args):
     """
     SOM_DATA_STRUCT Create a data struct.
 
@@ -48,26 +55,26 @@ def som_data_struct(D, name=None, *varargin):
     # Initialize label_names
     label_names = []
 
-    # Iterating over varargin
+    # Iterating over args
     i = 0
-    while i < len(varargin):
+    while i <= len(args)-1:
         argok = True
-        if isinstance(varargin[i], str):
-            if varargin[i] == 'comp_names':
-                i += 1
-                comp_names = varargin[i]
-            elif varargin[i] == 'labels':
-                i += 1
-                labels = varargin[i]
-            elif varargin[i] == 'name':
-                i += 1
-                name = varargin[i]
-            elif varargin[i] == 'comp_norm':
-                i += 1
-                comp_norm = varargin[i]
-            elif varargin[i] == 'label_names':
-                i += 1
-                label_names = varargin[i]
+        if isinstance(args[i], str):
+            if args[i] == 'comp_names':
+                
+                comp_names = args[i]
+            elif args[i] == 'labels':
+                
+                labels = args[i]
+            elif args[i] == 'name':
+                
+                name = args[i]
+            elif args[i] == 'comp_norm':
+                
+                comp_norm = args[i]
+            elif args[i] == 'label_names':
+                
+                label_names = args[i]
             else:
                 argok = False
         else:
@@ -76,7 +83,7 @@ def som_data_struct(D, name=None, *varargin):
         if not argok:
             print(f'(som_data_struct) Ignoring invalid argument #{i+1}')
 
-        i += 1
+        i =i+ 1
 
     # Create struct (represented as a dictionary)
     sData = som_set('som_data',*['data', 'labels', 'name', 'comp_names', 'comp_norm', 'label_names'],**{
@@ -88,7 +95,6 @@ def som_data_struct(D, name=None, *varargin):
         'label_names': label_names
     })
     
-        #             sData = som_set('som_data','data','labels','name','comp_names','comp_norm','label_names','data'=D, 'labels'=labels,'name'= name,
-        # 'comp_names'= comp_names,'comp_norm'= comp_norm,'label_names'= label_names)
+        
 
     return sData

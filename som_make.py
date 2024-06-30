@@ -6,9 +6,16 @@ Created on Tue May 14 15:05:03 2024
 """
 import numpy as np
 from sklearn.decomposition import PCA
-from som_map_functions import *
-from som_lininit import *
-from som_randinit import *
+from som_map_struct import som_map_struct
+from som_lininit import som_lininit
+from som_randinit import som_randinit
+from som_topol_struct import som_topol_struct
+from som_set import som_set
+from som_train_struct import som_train_struct
+from som_seqtrain import som_seqtrain
+from som_sompaktrain import som_sompaktrain
+from som_batchtrain import som_batchtrain
+from som_quality import som_quality
 
 def som_make(D, *args, **kwargs):
     # Parse input arguments
@@ -45,73 +52,73 @@ def som_make(D, *args, **kwargs):
     
     # args
     i = 0
-    while i < len(args):
+    while i <= len(args)-1:
         
         argok = 1
         if isinstance(args[i], str):
             if args[i] == 'mask':
-                mask = args[i]
-                i=i+1
+                mask = kwargs[args[i]]
+                
             elif args[i] == 'munits':
-                munits = args[i]
-                i=i+1
+                munits = kwargs[args[i]]
+                
             elif args[i] == 'msize':
-                sTopol['msize'] = args[i]
+                sTopol['msize'] = kwargs[args[i]]
                 munits = np.prod(sTopol['msize'])
-                i=i+1
+                
             elif args[i] == 'mapsize':
-                mapsize = args[i]
-                i=i+1
+                mapsize = kwargs[args[i]]
+                
             elif args[i] == 'name':
-                name = args[i]
-                i=i+1
+                name = kwargs[args[i]]
+                
             elif args[i] == 'comp_names':
-                comp_names = args[i]
-                i=i+1
+                comp_names = kwargs[args[i]]
+                
             elif args[i] == 'lattice':
-                sTopol['lattice'] = args[i]
-                i=i+1
+                sTopol['lattice'] = kwargs[args[i]]
+                
             elif args[i] == 'shape':
-                sTopol['shape'] = args[i]
-                i=i+1
+                sTopol['shape'] = kwargs[args[i]]
+                
             elif args[i] in ['topol', 'som_topol', 'sTopol']:
-                sTopol = args[i]
+                sTopol = kwargs[args[i]]
                 munits = np.prod(sTopol['msize'])
-                i=i+1
+                
             elif args[i] == 'neigh':
-                neigh = args[i]
-                i=i+1
+                neigh = kwargs[args[i]]
+                
             elif args[i] == 'tracking':
-                tracking = args[i]
-                i=i+1
+                tracking = kwargs[args[i]]
+                
             elif args[i] == 'algorithm':
-                algorithm = args[i]
-                i=i+1
+                algorithm = kwargs[args[i]]
+                
             elif args[i] == 'init':
-                initalg = args[i]
-                i=i+1
+                initalg = kwargs[args[i]]
+                
             elif args[i] == 'training':
-                training = args[i]
-                i=i+1
+                training = kwargs[args[i]]
+                
             elif args[i] in ['hexa', 'rect']:
-                sTopol['lattice']= args[i]
+                sTopol['lattice']= kwargs[args[i]]
             elif args[i] in ['sheet', 'cyl', 'toroid']:
-                sTopol['shape'] = args[i]
+                sTopol['shape'] = kwargs[args[i]]
             elif args[i] in ['gaussian','cutgauss','ep','bubble']:
-                neigh = args[i]
+                neigh = kwargs[args[i]]
             elif args[i] in ['seq','batch','sompak']:
-                algorithm= args[i]
+                algorithm= kwargs[args[i]]
             elif args[i] in ['small','normal','big']:
-                mapsize = args[i]
+                mapsize = kwargs[args[i]]
             elif args[i] in ['randinit','lininit']:
-                initalg = args[i]
+                initalg = kwargs[args[i]]
             elif args[i] in ['short','default','long']:
-                training = args[i]
+                training = kwargs[args[i]]
             else:
                 argok = 0
-        elif isinstance(arg, dict) and 'type' in arg:
-            if arg['type'] == 'som_topol':
-                sTopol = arg
+        elif isinstance(args, dict) and 'type' in args:
+            if args['type'] == 'som_topol':
+                sTopol = args
             else:
                 argok = 0
         else:
@@ -119,7 +126,7 @@ def som_make(D, *args, **kwargs):
     
         if not argok:
             print('(som_make) Ignoring invalid argument #', i + 1)
-        i += 1
+        i =i+ 1
     
     # Map size determination
     
@@ -157,12 +164,69 @@ def som_make(D, *args, **kwargs):
         
     if 'initalg' in locals():
         if initalg == 'randinit':
-            sMap = som_randinit(D, sMap)
+            sMap = som_randinit(D, *['sMap'],**{'sMap': sMap})
         elif initalg == 'lininit':
-            sMap = som_lininit(D,sMap)
-    sMap['trainhist'][0] = som_set(sMap['trainhist'][0], ['data_name'], {'data_name': data_name})
+            sMap = som_lininit(D, *['sMap'],**{'sMap': sMap})
     
-# Train SOM
+    sMap['trainhist'] = som_set(sMap['trainhist'], *['data_name'], **{'data_name': data_name})
+    # make trainhist a list
+    sMap['trainhist'] = [sMap['trainhist']]
+    # training
+    if tracking > 0:
+        print(f"Training using {algorithm} algorithm...")
+    
+    # rough train
+    if tracking > 0:
+        print(f"Rough training phase...")
+    
+    sTrain= som_train_struct(*['sMap','dlen', 'algorithm', 'phase'],
+                             **{'sMap': sMap,'dlen': dlen, 'algorithm': algorithm, 'phase': 'rough'})
+    sTrain = som_set(sTrain, *['data_name'], **{'data_name': data_name})
 
+    
+    if isinstance(training, np.ndarray):
+        sTrain['trainlen']=training
+    else:
+        if training == 'short':
+            sTrain['trainlen'] = max((1, sTrain['trainlen']/4))
+        elif training == 'long':
+            sTrain['trainlen'] = sTrain['trainlen']*4
+    
+    if func == 'seq':
+        sMap = som_seqtrain(sMap, D, *['sTrain','tracking', 'mask'], **{'sTrain': sTrain, 'tracking': tracking, 'mask': mask})
+    elif func == 'sompak':
+        sMap = som_sompaktrain(sMap, D, *['sTrain','tracking', 'mask'], **{'sTrain': sTrain, 'tracking': tracking, 'mask': mask})
+    elif func == 'batch':
+        sMap = som_batchtrain(sMap, D, *['sTrain','tracking', 'mask'], **{'sTrain': sTrain, 'tracking': tracking, 'mask': mask})
+    
+    
+    # finetune
+    if tracking > 0:
+        print(f"finetuning phase...")
+    sTrain = som_train_struct(*['sMap', 'dlen', 'phase'], **{'sMap': sMap, 'dlen': dlen, 'phase': 'finetune'})
+    sTrain = som_set(sTrain, *['data_name', 'algorithm'], **{'data_name': data_name, 'algorithm': algorithm})
+    
+    
+    if isinstance(training, np.ndarray):
+        sTrain['trainlen']=training
+    else:
+        if training == 'short':
+            sTrain['trainlen'] = max((1, sTrain['trainlen']/4))
+        elif training == 'long':
+            sTrain['trainlen'] = sTrain['trainlen']*4
+    
+    if func == 'seq':
+        sMap = som_seqtrain(sMap, D, *['sTrain','tracking', 'mask'], **{'sTrain': sTrain, 'tracking': tracking, 'mask': mask})
+    elif func == 'sompak':
+        sMap = som_sompaktrain(sMap, D, *['sTrain','tracking', 'mask'], **{'sTrain': sTrain, 'tracking': tracking, 'mask': mask})
+    elif func == 'batch':
+        sMap = som_batchtrain(sMap, D, *['sTrain','tracking', 'mask'], **{'sTrain': sTrain, 'tracking': tracking, 'mask': mask})
+    
+    
+    # quality
+    if tracking >0:
+        mqe , tge = som_quality(sMap, D)
+        print(f'Final quantization error: {mqe:.3f}')
+        print(f'Final topographic error:  {tge:.3f}')
     # Return trained SOM struct
-
+    return sMap

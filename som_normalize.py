@@ -7,7 +7,9 @@ Created on Tue May 14 13:23:44 2024
 
 import numpy as np
 import inspect
-from som_side_functions import *
+from som_set import som_set
+from som_norm_variable import som_norm_variable
+# from som_side_functions import *
 
 def som_normalize(sD, *args):
     
