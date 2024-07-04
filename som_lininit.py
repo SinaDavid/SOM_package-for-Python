@@ -95,9 +95,6 @@ def som_lininit(D, *args, **kwargs):
     
     if bool(sMap):
         sMap = som_set(sMap, *['topol'], **{'topol': sTopol})
-    
-    if structmode ==1:
-        sMap = som_set(sMap, *['comp_names', 'comp_norm'], **{'comp_names': comp_names, 'comp_norm': comp_norm})
     else:
         if not np.prod(sTopol['msize']):
             if np.isnan(munits):
@@ -106,6 +103,10 @@ def som_lininit(D, *args, **kwargs):
                 sTopol = som_topol_struct(*['data', 'munits', 'sTopol'], **{'data': D,'munits': munits, 'sTopol': sTopol})
             
             sMap = som_map_struct(dim, args, kwargs)
+            
+    if structmode ==1:
+        sMap = som_set(sMap, *['comp_names', 'comp_norm'], **{'comp_names': comp_names, 'comp_norm': comp_norm})
+    
     
             
     
@@ -134,9 +135,15 @@ def som_lininit(D, *args, **kwargs):
         me = np.zeros(dim)
         
         
-        me = np.mean(D, axis=0)  # Mean of finite values
-        D = D - me
-        
+        # me = np.mean(D, axis=0)  # Mean of finite values
+        # D = D - me
+        for i in range(dim):
+            # Compute mean of finite (non-NaN) values in the i-th column
+            me[i] = np.nanmean(D[:, i])  # Use np.nanmean to ignore NaNs in the computation
+    
+            # Subtract the mean from each element in the i-th column
+            D[:, i] = D[:, i] - me[i]
+
         for i in range(dim):
             for j in range(i, dim):
                 c = D[:, i] * D[:, j]
@@ -148,12 +155,18 @@ def som_lininit(D, *args, **kwargs):
         # Take mdim first eigenvectors with the greatest eigenvalues
         S, V = np.linalg.eig(A)
         ind = np.argsort(S)[::-1]  # Sort indices in descending order
-        S = S[ind]
-        V = V[:, ind]
-        S = np.diag(S)
+        eigval = S[ind]
         for i in range(V.shape[1]):
-            if V[0, i] < 0:
-                V[:, i] = -V[:, i]
+            V[:, i] /= np.linalg.norm(V[:, i])
+        
+        V = V[:, ind]
+        for i in range(V.shape[1]):
+            if np.dot(V[:, i], V[:, i]) < 0:  # Check dot product sign
+                V[:, i] *= -1
+        S = np.diag(S[:mdim])
+        # for i in range(V.shape[1]):
+        #     if V[0, i] < 0:
+        #         V[:, i] = -V[:, i]
         eigval = np.diag(S)[:mdim]
         V = V[:, :mdim]
 
@@ -189,7 +202,7 @@ def som_lininit(D, *args, **kwargs):
         Coords = (Coords - 0.5)*2
         for n in range(munits):
             for d in range(mdim):
-                sMap['codebook'][n,:] = sMap['codebook'][n,:] + Coords[n,d] * V[:,d]
+                sMap['codebook'][n,:] = sMap['codebook'][n,:] + Coords[n,d] * (V[:,d]*-1)# set to -V here
     else:
         sMap['codebook'] = (np.arange(munits) / (munits - 1)) * (max(D) - min(D)) + min(D)
 

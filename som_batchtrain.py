@@ -119,18 +119,18 @@ def som_batchtrain(sMap, D, *args, **kwargs):
             elif args[i] == 'weights':
                 weights = kwargs[args[i]]
             elif args[i] == 'radius_ini':
-                sTrain['radius_ini'] = kwargs[args[i]]
+                sTrain['radius_ini'] = np.array(kwargs[args[i]])
             elif args[i] == 'radius_fin':
-                sTrain['radius_fin'] = kwargs[args[i]]
+                sTrain['radius_fin'] = np.array(kwargs[args[i]])
             elif args[i] == 'radius':
                 l = len(kwargs[args[i]])
                 if l==1:
-                    sTrain['radius_ini']=kwargs[args[i]]
+                    sTrain['radius_ini']=np.array(kwargs[args[i]])
                 else:
-                    sTrain['radius_ini']= kwargs[args[i][1]]
-                    sTrain['radius_fin']= kwargs[args[i][-1]]
+                    sTrain['radius_ini']= np.array(kwargs[args[i][1]])
+                    sTrain['radius_fin']= np.array(kwargs[args[i][-1]])
                     if l>2:
-                        radius = kwargs[args[i]]
+                        radius = np.array(kwargs[args[i]])
             elif args[i] in {'sTrain','train','som_train'}:
                 sTrain = kwargs[args[i]]
             elif args[i] in {'topol','sTopol','som_topol'}:
@@ -183,13 +183,14 @@ def som_batchtrain(sMap, D, *args, **kwargs):
         sTrain['mask'] = np.ones((dim,1))
         
     #### INITIALIZE
+    breakpoint()
     M = sMap['codebook']
     mask = sTrain['mask']
     trainlen = sTrain['trainlen']
     
     # neigbourhood radius
     if trainlen == 1:
-        radius = sTrain['radius_ini']
+        radius = [sTrain['radius_ini']]
     elif len(radius)<=2:
         r0 = sTrain['radius_ini']
         r1 = sTrain['radius_fin']
@@ -208,7 +209,18 @@ def som_batchtrain(sMap, D, *args, **kwargs):
     
     #ero neighborhood radius may cause div-by-zero error
     eps = np.finfo(float).eps
-    radius[radius == 0] = eps
+    if np.isscalar(radius):
+        if radius==0:
+            radius=eps
+    else:
+        radius = np.array(radius, dtype=np.float64)
+        if len(radius) == 1:
+            if radius[0] == 0:
+                radius[0] = eps
+        else:
+            # Replace all zeros with eps
+            radius[radius == 0] = eps
+    
     
     # The training algorithm involves calculating weighted Euclidian distances 
     # to all map units for each data vector. Basically this is done as
@@ -276,7 +288,7 @@ def som_batchtrain(sMap, D, *args, **kwargs):
         Dist = np.square(M) @ W1[:, inds] - M @ WD[:, inds]
         ddists[inds] = np.min(Dist, axis=0)
         bmus[inds] = np.argmin(Dist, axis=0) 
-        
+       
       # tracking
       if tracking >0:
           ddists = ddists + dconst

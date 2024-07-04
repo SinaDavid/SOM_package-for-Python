@@ -16,25 +16,48 @@ from som_bmus import som_bmus
 from som_ind2sub import som_ind2sub
 import numpy as np
 from som_denormalize import som_denormalize
+from som_show import som_show
+import copy
+import pandas as pd
+import csv
+from reader import *
+
+## create dataset
+# filename= 'running.csv'
+
+
+# Read headers
+# headers = read_headers(filename)
+
+# Read data
+# data = read_data(filename)
+
 
 iris = load_iris()
 data= iris.data
 
-sData = som_data_struct(data)
+# sData = som_data_struct(data, *['comp_names'],**{'comp_names': headers})
+sData = som_data_struct(data, *['name'], **{'name':'unnamed'})
 
 plotdata = sData['data'].copy()
 
-sData_norm = som_normalize(sData, 'var')
+sData_copy=copy.deepcopy(sData)
+sData_norm = som_normalize(sData_copy, 'var')
 
-sMap = som_make(sData_norm, *['lattice', 'shape'],**{'lattice':'hexa', 'shape':'sheet'})
+sData_norm_copy= copy.deepcopy(sData_norm)
+sMap = som_make(sData_norm_copy, *['lattice', 'shape'],**{'lattice':'hexa', 'shape':'sheet'})
+breakpoint()
+sMap_copy = copy.deepcopy(sMap)
+Traj_train, Qerrs_train = som_bmus(sMap_copy, sData_norm_copy, 'all')
 
-Traj_train, Qerrs_train = som_bmus(sMap, sData_norm, 'all')
-
-Traj_train_coord = som_ind2sub(sMap, Traj_train[:,0])
+Traj_train_coord = som_ind2sub(sMap_copy, Traj_train[:,0])
 Traj_train_coord = np.concatenate((Traj_train_coord, Qerrs_train[:, [0]]), axis=1)
 line1 = np.concatenate((sMap['topol']['msize'], [0]))
 
-M = som_denormalize(sMap['codebook'], *[sMap])
+
+M = som_denormalize(sMap_copy['codebook'], *[sMap_copy])
+
+h =som_show(sMap)
 
 Traj_test, Qerrs_test = som_bmus(M, plotdata, 'all')
 

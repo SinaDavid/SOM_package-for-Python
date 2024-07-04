@@ -146,7 +146,7 @@ def som_make(D, *args, **kwargs):
         if tracking > 0:
             print(f"Map size [{sTopol['msize'][0]}, {sTopol['msize'][1]}]")
     
-    # breakpoint()
+    
     sMap = som_map_struct(dim, *['sTopol','neigh','mask', 'name', 'comp_names', 'comp_norm'],
                                  **{'sTopol': sTopol, 'neigh': neigh, 'mask': mask, 'name': name, 'comp_names': comp_names, 'comp_norm': comp_norm})
     
