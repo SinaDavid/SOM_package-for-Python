@@ -119,18 +119,18 @@ def som_batchtrain(sMap, D, *args, **kwargs):
             elif args[i] == 'weights':
                 weights = kwargs[args[i]]
             elif args[i] == 'radius_ini':
-                sTrain['radius_ini'] = np.array(kwargs[args[i]])
+                sTrain['radius_ini'] = kwargs[args[i]]
             elif args[i] == 'radius_fin':
-                sTrain['radius_fin'] = np.array(kwargs[args[i]])
+                sTrain['radius_fin'] = kwargs[args[i]]
             elif args[i] == 'radius':
                 l = len(kwargs[args[i]])
                 if l==1:
-                    sTrain['radius_ini']=np.array(kwargs[args[i]])
+                    sTrain['radius_ini']=kwargs[args[i]]
                 else:
-                    sTrain['radius_ini']= np.array(kwargs[args[i][1]])
-                    sTrain['radius_fin']= np.array(kwargs[args[i][-1]])
+                    sTrain['radius_ini']= kwargs[args[i][1]]
+                    sTrain['radius_fin']= kwargs[args[i][-1]]
                     if l>2:
-                        radius = np.array(kwargs[args[i]])
+                        radius = kwargs[args[i]]
             elif args[i] in {'sTrain','train','som_train'}:
                 sTrain = kwargs[args[i]]
             elif args[i] in {'topol','sTopol','som_topol'}:
@@ -183,14 +183,13 @@ def som_batchtrain(sMap, D, *args, **kwargs):
         sTrain['mask'] = np.ones((dim,1))
         
     #### INITIALIZE
-    breakpoint()
     M = sMap['codebook']
     mask = sTrain['mask']
     trainlen = sTrain['trainlen']
     
     # neigbourhood radius
     if trainlen == 1:
-        radius = [sTrain['radius_ini']]
+        radius = np.array([sTrain['radius_ini']])
     elif len(radius)<=2:
         r0 = sTrain['radius_ini']
         r1 = sTrain['radius_fin']
@@ -209,42 +208,9 @@ def som_batchtrain(sMap, D, *args, **kwargs):
     
     #ero neighborhood radius may cause div-by-zero error
     eps = np.finfo(float).eps
-    if np.isscalar(radius):
-        if radius==0:
-            radius=eps
-    else:
-        radius = np.array(radius, dtype=np.float64)
-        if len(radius) == 1:
-            if radius[0] == 0:
-                radius[0] = eps
-        else:
-            # Replace all zeros with eps
-            radius[radius == 0] = eps
+    radius[radius == 0] = eps
     
-    
-    # The training algorithm involves calculating weighted Euclidian distances 
-    # to all map units for each data vector. Basically this is done as
-    #   for i=1:dlen, 
-    #     for j=1:munits, 
-    #       for k=1:dim
-    #         Dist(j,i) = Dist(j,i) + mask(k) * (D(i,k) - M(j,k))^2;
-    #       end
-    #     end
-    #   end
-    # where mask is the weighting vector for distance calculation. However, taking 
-    # into account that distance between vectors m and v can be expressed as
-    #   |m - v|^2 = sum_i ((m_i - v_i)^2) = sum_i (m_i^2 + v_i^2 - 2*m_i*v_i)
-    # this can be made much faster by transforming it to a matrix operation:
-    #   Dist = (M.^2)*mask*ones(1,d) + ones(m,1)*mask'*(D'.^2) - 2*M*diag(mask)*D'
-    # Of the involved matrices, several are constant, as the mask and data do 
-    # not change during training. Therefore they are calculated beforehand.
-    
-    # For the case where there are unknown components in the data, each data
-    # vector will have an individual mask vector so that for that unit, the 
-    # unknown components are not taken into account in distance calculation.
-    # In addition all NaN's are changed to zeros so that they don't screw up 
-    # the matrix multiplications and behave correctly in updating step.
-    # D[147, :] = np.nan
+   
     Known =  (~np.isnan(D)).astype(int)
     D[~Known.astype(bool)] = 0
     W1 = (mask * np.ones((1, dlen)) * Known.T)
@@ -263,21 +229,12 @@ def som_batchtrain(sMap, D, *args, **kwargs):
     blen = min((munits,dlen))
     
     # reserve some space
-    bmus = np.zeros((1,dlen))
-    ddists = np.zeros((1,dlen))
+    # ddists = np.zeros(dlen) # changed here
+    # bmus = np.zeros(dlen, dtype=int)
     
     for t in range(0, trainlen):
-        # batchy train - this is done a block of data (inds) at a time
-      # rather than in a single sweep to save memory consumption. 
-      # The 'Dist' and 'Hw' matrices have size munits*blen
-      # which - if you have a lot of data - would be HUGE if you 
-      # calculated it all at once. A single-sweep version would 
-      # look like this: 
-      #  Dist = (M.^2)*W1 - M*WD; #+ W2*D2 
-      #  [ddists, bmus] = min(Dist);
-      # (notice that the W2*D2 term can be ignored since it is constant)
-      # This "batchy" version is the same as single-sweep if blen=dlen.
-      ddists = np.zeros(dlen)
+      
+      ddists = np.zeros(dlen) # changed here
       bmus = np.zeros(dlen, dtype=int)
       i0 = 0
       while i0 + 1 <= dlen:
@@ -285,17 +242,18 @@ def som_batchtrain(sMap, D, *args, **kwargs):
         i0 += blen
         
         # Calculate Dist
+        
         Dist = np.square(M) @ W1[:, inds] - M @ WD[:, inds]
         ddists[inds] = np.min(Dist, axis=0)
         bmus[inds] = np.argmin(Dist, axis=0) 
-       
+
       # tracking
       if tracking >0:
           ddists = ddists + dconst
-          ddists[ddists<0] = 0
+          ddists[ddists<0] = 0 
           qe[t] = np.mean(np.sqrt(ddists))
           trackplot(M,D,tracking,start,t,qe)
-      
+
       H = np.zeros_like(Ud)
     
       if sTrain['neigh']=='bubble':
@@ -310,20 +268,7 @@ def som_batchtrain(sMap, D, *args, **kwargs):
           raise ValueError(f"Unknown neighborhood type: {sTrain['neigh']}")
       # update 
 
-      # In principle the updating step goes like this: replace each map unit 
-      # by the average of the data vectors that were in its neighborhood.
-      # The contribution, or activation, of data vectors in the mean can 
-      # be varied with the neighborhood function. This activation is given 
-      # by matrix H. So, for each map unit the new weight vector is
-      #
-      #      m = sum_i (h_i * d_i) / sum_i (h_i), 
-      # 
-      # where i denotes the index of data vector.  Since the values of
-      # neighborhood function h_i are the same for all data vectors belonging to
-      # the Voronoi set of the same map unit, the calculation is actually done
-      # by first calculating a partition matrix P with elements p_ij=1 if the
-      # BMU of data vector j is i.
-      # Ensure bmus, weights, and np.arange(len(bmus)) have the same length
+      
       
       weights1=np.full(len(bmus), weights)  
       P = coo_matrix((weights1, (bmus, np.arange(len(bmus)))), shape=(munits, dlen))
@@ -351,8 +296,9 @@ def som_batchtrain(sMap, D, *args, **kwargs):
     return sMap    
     
 
-                     
 def trackplot(M,D,tracking,start,n,qe):
+    
+
     
     l=len(qe)
     elap_t = time.time() - start
@@ -378,6 +324,7 @@ def trackplot(M,D,tracking,start,n,qe):
         plt.grid(True)
         plt.draw()
         plt.pause(0.001)  # Needed for interactive plotting
+        plt.show()
     else:
         # Default case: subplot visualization
         plt.figure(figsize=(10, 8))
@@ -402,4 +349,4 @@ def trackplot(M,D,tracking,start,n,qe):
         plt.draw()
         plt.pause(0.001)  # Needed for interactive plotting
     
-    plt.show() 
+        plt.show() 

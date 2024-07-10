@@ -157,7 +157,7 @@ def som_make(D, *args, **kwargs):
         func = 'sompak'
     else:
         func=algorithm
-        
+       
     ## initialization
     if tracking > 0:
         print("Initialization...")

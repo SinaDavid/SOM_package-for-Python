@@ -8,7 +8,7 @@ Created on Wed Jun 19 11:51:09 2024
 import numpy as np
 from som_set import som_set
 
-def som_data_struct(D, *args, **kwargs):
+def som_data_struct(D, name=None, *args):
     """
     SOM_DATA_STRUCT Create a data struct.
 
@@ -40,12 +40,13 @@ def som_data_struct(D, *args, **kwargs):
     # Get size of input data
     dlen, dim = D.shape
     # Initialize name
-    name = 'unnamed'
+    if name is None:
+        name = 'unnamed'
+
     # Initialize labels
     labels = [''] * dlen
 
     # Create comp_names list
-    
     comp_names = [f'Variable{i}' for i in range(1, dim+1)]
 
     # Create an empty list of length dim for comp_norm
@@ -61,19 +62,19 @@ def som_data_struct(D, *args, **kwargs):
         if isinstance(args[i], str):
             if args[i] == 'comp_names':
                 
-                comp_names = kwargs[args[i]]
+                comp_names = args[i]
             elif args[i] == 'labels':
                 
-                labels = kwargs[args[i]]
+                labels = args[i]
             elif args[i] == 'name':
                 
-                name = kwargs[args[i]]
+                name = args[i]
             elif args[i] == 'comp_norm':
                 
-                comp_norm = kwargs[args[i]]
+                comp_norm = args[i]
             elif args[i] == 'label_names':
                 
-                label_names = kwargs[args[i]]
+                label_names = args[i]
             else:
                 argok = False
         else:

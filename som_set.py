@@ -188,13 +188,13 @@ def som_set(sS, *args, **kwargs):
                 if not isinstance(content, np.ndarray) or 'isscalar' not in locals():
                     print("radius_ini'' should be a scalar")
                 else:
-                    sS['radius_ini']= np.array(content)
+                    sS['radius_ini']= content
                     isok=1
             elif field== 'radius_fin':
                 if not isinstance(content, np.ndarray) or 'isscalar' not in locals():
                     print("'radius_fin'' should be a scalar.")
                 else:
-                    sS['radius_fin']= np.array(content)
+                    sS['radius_fin']= content
                     isok=1
             elif field== 'alpha_ini':
                 if not isinstance(content, np.array) or 'isscalar' not in locals():

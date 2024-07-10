@@ -305,7 +305,8 @@ def som_train_struct(*args, **kwargs):
                 sTrain['radius_fin']= max(1, sTrain['radius_ini']/4)
             else:
                 sTrain['radius_fin']=1
-                
+        
+        
         # trainlen
         if np.isnan(sTrain['trainlen']):
             mpd = munits/dlen

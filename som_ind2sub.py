@@ -24,7 +24,7 @@ def som_ind2sub(msize, inds):
     # Loop in reverse order
     for i in range(n-1, -1, -1):
         Subs[:, i] = np.floor_divide(inds, k[i])
-        print(Subs)
+        
         inds = np.mod(inds, k[i])
     
     return Subs

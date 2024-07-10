@@ -22,7 +22,7 @@ def som_map_struct(dim,*args, **kwargs):
     labels = [''] * np.prod(sTopol['msize'])
     comp_names = [f'Variable{i}' for i in range(1, dim + 1)]
     comp_norm = [None] * dim
-
+    
     # args
     # if args:
     i = 0 
@@ -86,9 +86,11 @@ def som_map_struct(dim,*args, **kwargs):
     #     codebook = np.empty((0, dim))
     # else:
     # Otherwise, generate codebook using random values
-    # codebook = np.random.uniform(np.prod(sTopol['msize']), dim)
-    codebook = np.random.uniform(low=0.0, high=1.0, size=(np.prod(sTopol['msize']), dim))
-    breakpoint()
+    
+    np.random.seed(1337)
+    codebook = np.random.rand(dim,np.prod(sTopol['msize']))
+    codebook=codebook.T
+    
     sTrain = som_set('som_train', *['time','mask'], **{'time':datetime.now().strftime('%Y-%m-%d %H:%M:%S'),'mask':mask})  # Update time formatting
     # breakpoint()
     sMap = som_set('som_map', *['codebook', 'topol', 'neigh', 'labels', 'mask', 'comp_names', 'name', 'comp_norm', 'trainhist'], 

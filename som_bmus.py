@@ -71,7 +71,7 @@ def som_bmus(sMap, sData, which_bmus, *mask):
     else:
         if isinstance(which_bmus, str):
             if which_bmus== 'best':
-                which_bmus=1
+                which_bmus=[1]
             elif which_bmus== 'worst':
                 which_bmus= munits
             elif which_bmus== 'all':
@@ -111,7 +111,6 @@ def som_bmus(sMap, sData, which_bmus, *mask):
       inds = np.arange(i0, min(dlen, i0 + blen))
       i0 += blen
       Dist = np.square(M) @ W1[:, inds] - M @ WD[:, inds]
-    
       # find the bmus and the corresponding quantization errors
       if np.all(which_bmus==1):
           Q = np.min(Dist, axis=0)
