@@ -5,7 +5,7 @@ Created on Wed Jul 10 10:00:25 2024
 @author: sdd380
 """
 import os
-os.chdir('C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Workshop/ISBS2024_ML/Unsupervised Learning/')
+os.chdir('change working directory here')
 
 from som_data_struct import som_data_struct
 from som_normalize import som_normalize
