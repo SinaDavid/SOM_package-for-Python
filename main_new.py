@@ -106,13 +106,14 @@ for r in range(len(M)):
 
 FRAMES_re = FRAMES_SOM1.reshape(line1[0], line1[1])
 
+extent = [0, FRAMES_re.shape[0], 0, FRAMES_re.shape[1]]
+
 plt.figure(figsize=(10, 8))
-plt.imshow(FRAMES_re.T, aspect='auto', cmap='viridis', origin='lower')
+plt.imshow(FRAMES_re, aspect='auto', cmap='viridis', origin='lower', extent=extent)
 plt.colorbar(label='Gait cycle (%)')
 plt.xlabel('X Coordinate SOM')
 plt.ylabel('Y Coordinate SOM')
-plt.title('2D Heatmap of FRAMES')
-plt.show()
+plt.title('2D Heatmap of FRAMES together with the Trajectories')
 breakpoint()
 
 ## EXPLORE THE MAP
@@ -145,16 +146,20 @@ plt.xlabel('X Coordinate SOM')
 plt.ylabel('Y Coordinate SOM')
 plt.title('2D Heatmap of FRAMES together with the Trajectories')
 
+# Plot MEAN_train and MEAN_test with error bars
 for i in range(101):
     if i == 0:
-        plt.plot(MEAN_train[i, 0], MEAN_train[i, 1], 'bo', markersize=marker_sizes[i], label='MEAN_train')
-        plt.plot(MEAN_test[i, 0], MEAN_test[i, 1], 'ro', markersize=marker_sizes[i], label='MEAN_test')
-    else:
+        plt.errorbar(MEAN_train[i, 0], MEAN_train[i, 1], xerr=STD_train[i, 0], yerr=STD_train[i, 1], fmt='none', ecolor='b', label='MEAN_train')
+        plt.errorbar(MEAN_test[i, 0], MEAN_test[i, 1], xerr=STD_test[i, 0], yerr=STD_test[i, 1], fmt='none', ecolor='r', label='MEAN_test')
         plt.plot(MEAN_train[i, 0], MEAN_train[i, 1], 'bo', markersize=marker_sizes[i])
-        plt.plot(MEAN_test[i, 0], MEAN_test[i, 1], 'ro', markersize=10)  # MEAN_Stroke markers are uniform size
+        plt.plot(MEAN_test[i, 0], MEAN_test[i, 1], 'ro', markersize=marker_sizes[i])
+    else:
+        plt.errorbar(MEAN_train[i, 0], MEAN_train[i, 1], xerr=STD_train[i, 0], yerr=STD_train[i, 1], fmt='none', ecolor='b')
+        plt.errorbar(MEAN_test[i, 0], MEAN_test[i, 1], xerr=STD_test[i, 0], yerr=STD_test[i, 1], fmt='none', ecolor='r')
+        plt.plot(MEAN_train[i, 0], MEAN_train[i, 1], 'bo', markersize=marker_sizes[i])
+        plt.plot(MEAN_test[i, 0], MEAN_test[i, 1], 'ro', markersize=marker_sizes[i])
 
-    plt.errorbar(MEAN_train[i, 0], MEAN_train[i, 1], xerr=STD_train[i, 0], yerr=STD_train[i, 1], fmt='none', ecolor='b')
-    plt.errorbar(MEAN_test[i, 0], MEAN_test[i, 1], xerr=STD_test[i, 0], yerr=STD_test[i, 1], fmt='none', ecolor='r')
+# Set aspect ratio to be equal
 plt.gca().set_aspect('equal', adjustable='box')
 
 plt.legend()
