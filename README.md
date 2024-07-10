@@ -8,4 +8,6 @@
 
  The example dataset is based on the Running and Gait datasets from Fukuji et al.
 
+ A more elaborate description will follow soon...
+
  
