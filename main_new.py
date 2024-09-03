@@ -33,7 +33,6 @@ sData = som_data_struct(data.copy())
 sData_copy = copy.deepcopy(sData)
 
 test_data = read_data(filename_test)
-headers_test = read_headers(filename_test)
 sTest = som_data_struct(test_data.copy())
 sTest['comp_names'] = headers
 sTest_copy = copy.deepcopy(sTest)
@@ -49,9 +48,10 @@ sTest_norm_copy = copy.deepcopy(sTest_norm)
 
 
 ## Train the SOM
-sMap = som_make(sData_norm, *['lattice', 'shape', 'training'],**{'lattice':'hexa', 'shape':'sheet', 'training': 'long'})
+sMap = som_make(sData_norm, *['lattice', 'shape', 'training', 'initi'],**{'lattice':'hexa', 'shape':'sheet', 'training': 'long', 'init': 'randinit'})
 
 sMap['comp_names'] = headers
+
 
 
 ## Find best-matching units
@@ -69,15 +69,15 @@ Traj_test_coord = np.concatenate((Traj_test_coord, Qerrs_test[:, [0]]), axis=1)
 ## Denormalize the weight vectors
 M = som_denormalize(sMap['codebook'].copy(), *[sMap])
 
-# Traj_train, Qerrs_train = som_bmus(M, plotdata.copy(), 'all')
-# Traj_train_coord = som_ind2sub(sMap, Traj_train[:,0])
-# Traj_train_coord = np.concatenate((Traj_train_coord, Qerrs_train[:, [0]]), axis=1)
+Traj_train, Qerrs_train = som_bmus(M, plotdata.copy(), 'all')
+Traj_train_coord = som_ind2sub(sMap, Traj_train[:,0])
+Traj_train_coord = np.concatenate((Traj_train_coord, Qerrs_train[:, [0]]), axis=1)
 
-# Traj_test, Qerrs_test = som_bmus(M, plotdata_test.copy(), 'all')
-# Traj_test_coord = som_ind2sub(sMap, Traj_test[:,0])
-# Traj_test_coord = np.concatenate((Traj_test_coord, Qerrs_test[:, [0]]), axis=1)
+Traj_test, Qerrs_test = som_bmus(M, plotdata_test.copy(), 'all')
+Traj_test_coord = som_ind2sub(sMap, Traj_test[:,0])
+Traj_test_coord = np.concatenate((Traj_test_coord, Qerrs_test[:, [0]]), axis=1)
 
-
+breakpoint()
 
 ## index all input vectors assigned to one neuron
 # find the lines that hit each neuron
@@ -114,7 +114,7 @@ plt.colorbar(label='Gait cycle (%)')
 plt.xlabel('X Coordinate SOM')
 plt.ylabel('Y Coordinate SOM')
 plt.title('2D Heatmap of FRAMES together with the Trajectories')
-
+breakpoint()
 
 ## EXPLORE THE MAP
 x_train = np.reshape(Traj_train_coord[:, 0], (101, -1), order='F')
@@ -132,6 +132,9 @@ STD_test = np.column_stack((np.round(np.std(x_test, axis=1)), np.round(np.std(y_
 marker_sizes = np.ones(101) * 10  # Initialize all markers to size 10
 marker_sizes[0] = 20  # Make the first marker larger
 
+print(f"MEAN_train range: X({MEAN_train[:, 0].min()} to {MEAN_train[:, 0].max()}), Y({MEAN_train[:, 1].min()} to {MEAN_train[:, 1].max()})")
+print(f"MEAN_test range: X({MEAN_test[:, 0].min()} to {MEAN_test[:, 0].max()}), Y({MEAN_test[:, 1].min()} to {MEAN_test[:, 1].max()})")
+print(f"FRAMES_re shape: {FRAMES_re.shape}")
 
 # Define the extent based on the actual data ranges
 extent = [0, FRAMES_re.shape[0], 0, FRAMES_re.shape[1]]
@@ -161,7 +164,7 @@ plt.gca().set_aspect('equal', adjustable='box')
 
 plt.legend()
 plt.show()
-
+breakpoint()
 
 ## MOVEMENT DEVIATION PROFILE
 # here the aim is to find the difference in Quantization Errors of the train and the test set

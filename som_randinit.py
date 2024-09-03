@@ -167,9 +167,11 @@ def som_randinit(D, *args, **kwargs):
     sMap['codebook']= np.random.rand(munits, dim)
     
     # set interval of each component to correct value
+    
     for i in range(dim):
-        inds = np.where(~np.isnan(D[:, i]))[0] and ~np.isinf(D[:, i])[0]
-        if ~bool(inds):
+        inds = np.where(~np.isnan(D[:, i]) & ~np.isinf(D[:, i]))[0]
+
+        if ~bool(inds.all()):
             mi = 0
             ma = 1
         else:
