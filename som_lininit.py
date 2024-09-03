@@ -95,7 +95,6 @@ def som_lininit(D, *args, **kwargs):
     
     if bool(sMap):
         sMap = som_set(sMap, *['topol'], **{'topol': sTopol})
-    
     else:
         if not np.prod(sTopol['msize']):
             if np.isnan(munits):
@@ -104,10 +103,12 @@ def som_lininit(D, *args, **kwargs):
                 sTopol = som_topol_struct(*['data', 'munits', 'sTopol'], **{'data': D,'munits': munits, 'sTopol': sTopol})
             
             sMap = som_map_struct(dim, args, kwargs)
-    
+            
     if structmode ==1:
         sMap = som_set(sMap, *['comp_names', 'comp_norm'], **{'comp_names': comp_names, 'comp_norm': comp_norm})
-           
+    
+    
+            
     
     
     ## initialization
@@ -139,11 +140,10 @@ def som_lininit(D, *args, **kwargs):
         for i in range(dim):
             # Compute mean of finite (non-NaN) values in the i-th column
             me[i] = np.nanmean(D[:, i])  # Use np.nanmean to ignore NaNs in the computation
-           
-
+    
             # Subtract the mean from each element in the i-th column
             D[:, i] = D[:, i] - me[i]
-          
+
         for i in range(dim):
             for j in range(i, dim):
                 c = D[:, i] * D[:, j]
@@ -153,40 +153,27 @@ def som_lininit(D, *args, **kwargs):
         
         
         # Take mdim first eigenvectors with the greatest eigenvalues
-        # Step 1: Compute eigenvectors and eigenvalues
-        eigval, V = np.linalg.eig(A)
+        S, V = np.linalg.eig(A)
+        ind = np.argsort(S)[::-1]  # Sort indices in descending order
+        eigval = S[ind]
+        for i in range(V.shape[1]):
+            V[:, i] /= np.linalg.norm(V[:, i])
         
-        # Step 2: Extract eigenvalues and sort
-        ind = np.argsort(eigval)[::-1]  # Sort eigenvalues in descending order
-        eigval = eigval[ind]
         V = V[:, ind]
-        
-        # Step 3: Select top mdim eigenvalues and eigenvectors
-        mdim = 2  # Example: Selecting top 2 eigenvalues and eigenvectors
-        eigval = eigval[:mdim]
-        V = V[:, :mdim]
-        
-        # Step 4: Normalize eigenvectors and scale by square root of eigenvalues
-        for i in range(mdim):
-            norm = np.linalg.norm(V[:, i])
-            V[:, i] = (V[:, i] / norm) * np.sqrt(eigval[i])             
-        
-               
-        # S, V = np.linalg.eig(A)
-        # ind = np.argsort(S)[::-1]  # Sort indices in descending order
-        # S = S[ind] # S=eigval
-        # V = V[:, ind]
-        # S = np.diag(S)
+        for i in range(V.shape[1]):
+            if np.dot(V[:, i], V[:, i]) < 0:  # Check dot product sign
+                V[:, i] *= -1
+        S = np.diag(S[:mdim])
         # for i in range(V.shape[1]):
         #     if V[0, i] < 0:
         #         V[:, i] = -V[:, i]
-        # eigval = np.diag(S)[:mdim]
-        # V = V[:, :mdim]
+        eigval = np.diag(S)[:mdim]
+        V = V[:, :mdim]
 
         
-        # # Normalize eigenvectors to unit length and multiply them by corresponding (square-root-of-)eigenvalues
-        # for i in range(mdim):
-        #     V[:, i] = (V[:, i] / np.linalg.norm(V[:, i])) * np.sqrt(eigval[i])
+        # Normalize eigenvectors to unit length and multiply them by corresponding (square-root-of-)eigenvalues
+        for i in range(mdim):
+            V[:, i] = (V[:, i] / np.linalg.norm(V[:, i])) * np.sqrt(eigval[i])
     
     else:
         me = np.zeros(dim)
@@ -204,7 +191,7 @@ def som_lininit(D, *args, **kwargs):
         Coords = som_unit_coords(msize, *['lattice', 'shape'], **{'lattice': 'rect', 'shape': 'sheet'})
         cox = Coords[:,0].copy()
         Coords[:,0] = Coords[:,1]
-        Coords[:,1] = cox.copy()
+        Coords[:,1] = cox
         for i in range(mdim):
             ma = max(Coords[:,i])
             mi = min(Coords[:,i])
@@ -215,7 +202,7 @@ def som_lininit(D, *args, **kwargs):
         Coords = (Coords - 0.5)*2
         for n in range(munits):
             for d in range(mdim):
-                sMap['codebook'][n,:] = sMap['codebook'][n,:] + Coords[n,d] * V[:,d]
+                sMap['codebook'][n,:] = sMap['codebook'][n,:] + Coords[n,d] * (V[:,d]*-1)# set to -V here
     else:
         sMap['codebook'] = (np.arange(munits) / (munits - 1)) * (max(D) - min(D)) + min(D)
 

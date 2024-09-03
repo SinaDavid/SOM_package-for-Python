@@ -46,7 +46,8 @@ def som_make(D, *args, **kwargs):
     neigh = sM['neigh']
     tracking = 1
     algorithm = 'batch'
-    initalg = 'lininit'
+    initalg = 'randinit'
+    # initalg = 'lininit'
     training = 'default'
     
     
@@ -157,11 +158,11 @@ def som_make(D, *args, **kwargs):
         func = 'sompak'
     else:
         func=algorithm
-       
+        
     ## initialization
     if tracking > 0:
         print("Initialization...")
-        
+    breakpoint()    
     if 'initalg' in locals():
         if initalg == 'randinit':
             sMap = som_randinit(D, *['sMap'],**{'sMap': sMap})
