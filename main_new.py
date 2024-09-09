@@ -24,6 +24,12 @@ from sklearn.cluster import KMeans
 filename = 'walking.csv'
 filename_test = 'running.csv'
 
+# predifine some inputs
+trial_length = 101 # enter the length of your trial here or use code to determine it. trial_length= length of a single trial
+N_train = 684 # number of trials in the train set
+N_test = 168 # number of trials in the test set
+
+
 # Read data
 headers = read_headers(filename)
 data = read_data(filename)
@@ -93,10 +99,10 @@ for t in range(0, line1[1]):
 # Flatten index using list comprehension
 index_reQE = [item for sublist in index for item in sublist]
 # Number of frames (t)
-num_repeats = len(plotdata) // 101
+num_repeats = len(plotdata) // trial_length
 
 ## Create a linearly spaced vector from 1 to 101
-frame = np.linspace(1, 101, 101)
+frame = np.linspace(1, trial_length, trial_length)
 FRAMES = np.tile(frame, (num_repeats, 1)).flatten()
 FRAMES = FRAMES.reshape(-1, 1)
 
@@ -117,19 +123,19 @@ plt.title('2D Heatmap of FRAMES together with the Trajectories')
 breakpoint()
 
 ## EXPLORE THE MAP
-x_train = np.reshape(Traj_train_coord[:, 0], (101, -1), order='F')
-y_train = np.reshape(Traj_train_coord[:, 1], (101, -1), order='F') 
+x_train = np.reshape(Traj_train_coord[:, 0], (trial_length, -1), order='F')
+y_train = np.reshape(Traj_train_coord[:, 1], (trial_length, -1), order='F') 
 MEAN_train = np.column_stack((np.round(np.mean(x_train, axis=1)), np.round(np.mean(y_train, axis=1))))
 STD_train = np.column_stack((np.round(np.std(x_train, axis=1)), np.round(np.std(y_train, axis=1))))
 
-x_test = np.reshape(Traj_test_coord[:, 0], (101, -1), order='F')
-y_test = np.reshape(Traj_test_coord[:, 1], (101, -1), order='F')
+x_test = np.reshape(Traj_test_coord[:, 0], (trial_length, -1), order='F')
+y_test = np.reshape(Traj_test_coord[:, 1], (trial_length, -1), order='F')
 MEAN_test = np.column_stack((np.round(np.mean(x_test, axis=1)), np.round(np.mean(y_test, axis=1))))
 STD_test = np.column_stack((np.round(np.std(x_test, axis=1)), np.round(np.std(y_test, axis=1))))
 
 
 
-marker_sizes = np.ones(101) * 10  # Initialize all markers to size 10
+marker_sizes = np.ones(trial_length) * 10  # Initialize all markers to size 10
 marker_sizes[0] = 20  # Make the first marker larger
 
 print(f"MEAN_train range: X({MEAN_train[:, 0].min()} to {MEAN_train[:, 0].max()}), Y({MEAN_train[:, 1].min()} to {MEAN_train[:, 1].max()})")
@@ -147,7 +153,7 @@ plt.ylabel('Y Coordinate SOM')
 plt.title('2D Heatmap of FRAMES together with the Trajectories')
 
 # Plot MEAN_train and MEAN_test with error bars
-for i in range(101):
+for i in range(trial_length):
     if i == 0:
         plt.errorbar(MEAN_train[i, 0], MEAN_train[i, 1], xerr=STD_train[i, 0], yerr=STD_train[i, 1], fmt='none', ecolor='b', label='MEAN_train')
         plt.errorbar(MEAN_test[i, 0], MEAN_test[i, 1], xerr=STD_test[i, 0], yerr=STD_test[i, 1], fmt='none', ecolor='r', label='MEAN_test')
@@ -172,16 +178,16 @@ breakpoint()
 # Deviation Profile (MDP)
 
 # Reshape the first column of Traj_train
-error_train = np.reshape(Traj_train_coord[:, 2], (101, -1), order='F')
+error_train = np.reshape(Traj_train_coord[:, 2], (trial_length, -1), order='F')
 MEAN_error_train = np.mean(error_train,axis=1)
 STD_error_train = np.std(error_train, axis=1)
 
 
-error_test = np.reshape(Traj_test_coord[:, 2], (101, -1), order='F')
+error_test = np.reshape(Traj_test_coord[:, 2], (trial_length, -1), order='F')
 MEAN_error_test = np.mean(error_test,axis=1)
 STD_error_test = np.std(error_test, axis=1)
 
-x = np.arange(1, 102)
+x = np.arange(1, trial_length+1)
 y = STD_error_train
 # Create the plot
 plt.figure()
@@ -189,7 +195,7 @@ p1, = plt.plot(x, MEAN_error_train, 'k', linewidth=4, label='train Mean')
 plt.fill_between(x, MEAN_error_train - y , MEAN_error_train + y, color=[0.6, 0.7, 0.8], alpha=0.2)
 p2, = plt.plot(x, MEAN_error_test, 'r', label='test_MEAN')
 
-plt.xlim([1, 101])
+plt.xlim([1, trial_length])
 plt.xlabel('Gait Cycle (%)')
 plt.ylabel('Quantization Error')
 plt.legend()
@@ -199,8 +205,8 @@ plt.show()
 breakpoint()
 
 ### CLUSTER the data based on the bmus
-data1 = np.reshape(Traj_train_coord[:,0:3],(684, 101,3))
-data2 = np.reshape(Traj_test_coord[:,0:3],(168, 101,3))
+data1 = np.reshape(Traj_train_coord[:,0:3],(N_train, trial_length,3))
+data2 = np.reshape(Traj_test_coord[:,0:3],(N_test, trial_length,3))
 
 # Combine data along the first axis (vertical concatenation)
 combined_data = np.concatenate((data1, data2), axis=0)
