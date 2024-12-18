@@ -6,7 +6,7 @@ Created on Wed Jul 10 10:00:25 2024
 """
 import os
 os.chdir('C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Workshop/ISBS2024_ML/Unsupervised Learning/')
-
+# os.chdir('C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Stroke/')
 from som_data_struct import som_data_struct
 from som_normalize import som_normalize
 from som_make import som_make
@@ -21,24 +21,24 @@ from sklearn.cluster import KMeans
 
 
 ## define dataset
-filename = 'walking.csv'
-filename_test = 'running.csv'
+filename = 'C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Stroke/SOM_Data_ControlAngles_2402.txt'
+filename_test = 'C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Stroke/SOM_Data_StrokeAngles_2402.txt'
 
 # predifine some inputs
 trial_length = 101 # enter the length of your trial here or use code to determine it. trial_length= length of a single trial
-N_train = 684 # number of trials in the train set
-N_test = 168 # number of trials in the test set
+N_train = 126 # number of trials in the train set
+N_test = 93 # number of trials in the test set
 
 
 # Read data
-headers = read_headers(filename)
-data = read_data(filename)
+headers = read_headers(filename, delimiter='\t' )
+data = read_data(filename, delimiter='\t')
 
 # create train and test structures
 sData = som_data_struct(data.copy())
 sData_copy = copy.deepcopy(sData)
 
-test_data = read_data(filename_test)
+test_data = read_data(filename_test,delimiter='\t')
 sTest = som_data_struct(test_data.copy())
 sTest['comp_names'] = headers
 sTest_copy = copy.deepcopy(sTest)
@@ -54,7 +54,7 @@ sTest_norm_copy = copy.deepcopy(sTest_norm)
 
 
 ## Train the SOM
-sMap = som_make(sData_norm, *['lattice', 'shape', 'training', 'initi'],**{'lattice':'hexa', 'shape':'sheet', 'training': 'long', 'init': 'randinit'})
+sMap = som_make(sData_norm, *['lattice', 'shape', 'training', 'initi'],**{'lattice':'hexa', 'shape':'sheet', 'training': 'long', 'init': 'lininit'})
 
 sMap['comp_names'] = headers
 
@@ -83,7 +83,6 @@ Traj_test, Qerrs_test = som_bmus(M, plotdata_test.copy(), 'all')
 Traj_test_coord = som_ind2sub(sMap, Traj_test[:,0])
 Traj_test_coord = np.concatenate((Traj_test_coord, Qerrs_test[:, [0]]), axis=1)
 
-breakpoint()
 
 ## index all input vectors assigned to one neuron
 # find the lines that hit each neuron
@@ -108,7 +107,7 @@ FRAMES = FRAMES.reshape(-1, 1)
 
 FRAMES_SOM1 = np.zeros((len(M), 1))
 for r in range(len(M)):
-    FRAMES_SOM1[r, 0] = np.mean(FRAMES[index_reQE[r]])
+    FRAMES_SOM1[r, 0] = np.sum(1/Traj_train_coord[index_reQE[r],2]*FRAMES[index_reQE[r],0])/np.sum(1/Traj_train_coord[index_reQE[r],2])
 
 FRAMES_re = FRAMES_SOM1.reshape(line1[0], line1[1])
 
@@ -120,7 +119,7 @@ plt.colorbar(label='Gait cycle (%)')
 plt.xlabel('X Coordinate SOM')
 plt.ylabel('Y Coordinate SOM')
 plt.title('2D Heatmap of FRAMES together with the Trajectories')
-breakpoint()
+
 
 ## EXPLORE THE MAP
 x_train = np.reshape(Traj_train_coord[:, 0], (trial_length, -1), order='F')
@@ -170,7 +169,7 @@ plt.gca().set_aspect('equal', adjustable='box')
 
 plt.legend()
 plt.show()
-breakpoint()
+
 
 ## MOVEMENT DEVIATION PROFILE
 # here the aim is to find the difference in Quantization Errors of the train and the test set
@@ -202,7 +201,7 @@ plt.legend()
 
 plt.show()
 
-breakpoint()
+
 
 ### CLUSTER the data based on the bmus
 data1 = np.reshape(Traj_train_coord[:,0:3],(N_train, trial_length,3))
@@ -242,6 +241,8 @@ data2_clusters[cluster_labels[num_data1:] == 1] = 2  # Assign cluster 2 to traje
 # Combine the cluster labels into a single array
 cluster_assignment = np.concatenate((data1_clusters, data2_clusters))
 
+breakpoint()
+
 fig = plt.figure(figsize=(10, 6))
 ax = fig.add_subplot(111, projection='3d')
 
@@ -278,3 +279,7 @@ for i in range(len(cluster_assignment)):
         print(f"Data1 slice {i} is in Cluster {cluster_assignment[i]}")
     else:
         print(f"Data2 slice {i - num_data1} is in Cluster {cluster_assignment[i]}")
+
+        
+# correlation_matrix = np.corrcoef(cluster_assignment, data2)
+        
