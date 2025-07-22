@@ -5,8 +5,9 @@ Created on Wed Jul 10 10:00:25 2024
 @author: sdd380
 """
 import os
-os.chdir('C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Workshop/ISBS2024_ML/Unsupervised Learning/')
-# os.chdir('C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Stroke/')
+from pathlib import Path
+base_dir = Path(__file__).resolve().parent
+
 from som_data_struct import som_data_struct
 from som_normalize import som_normalize
 from som_make import som_make
@@ -21,8 +22,8 @@ from sklearn.cluster import KMeans
 
 
 ## define dataset
-filename = 'C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Stroke/SOM_Data_ControlAngles_2402.txt'
-filename_test = 'C:/Users/sdd380/surfdrive - David, S. (Sina)@surfdrive.surf.nl/Projects/SOM_Stroke/SOM_Data_StrokeAngles_2402.txt'
+filename = base_dir / 'SOM_Data_ControlAngles_2402.txt'
+filename_test = base_dir / 'SOM_Data_StrokeAngles_2402.txt'
 
 # predifine some inputs
 trial_length = 101 # enter the length of your trial here or use code to determine it. trial_length= length of a single trial
